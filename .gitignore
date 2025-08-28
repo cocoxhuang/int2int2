@@ -4,7 +4,7 @@
 # data/data_val.txt
 # data/data.csv
 # data/raw_data.parquet
-data
+/data
 
 # Python bytecode
 __pycache__/
