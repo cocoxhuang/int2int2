@@ -1,0 +1,13 @@
+# data/data_encoded.csv
+# data/data_test.txt
+# data/data_train.txt
+# data/data_val.txt
+# data/data.csv
+# data/raw_data.parquet
+data
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
