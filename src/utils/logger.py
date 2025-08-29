@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class Logger:    
-    def __init__(self, cache_dir="cache", name="DyckTransformer",resume_from=None):
+    def __init__(self, cache_dir="cache", name="Experiment",resume_from=None):
         """
         Initialize the logger.
         

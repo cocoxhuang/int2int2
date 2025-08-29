@@ -3,7 +3,7 @@ from src.model.transformer import Transformer
 from src.data.dataset import Dataset
 from src.training.trainer import Trainer
 from src.utils.config import load_config, save_config
-from src.data.dyck_generator import generate_dyck_data
+from src.data.tokenizer import BaseTokenizer
 from src.utils.logger import Logger
 import os
 import pandas as pd
@@ -40,17 +40,11 @@ def main(config_path, resume_from=None):
         data = pd.read_csv(data_path)
     else:
         raise ValueError("Data file must be a .parquet or .csv file")
-    dataset = Dataset(data, config['data']['seed'], batch_size=config['training']['batch_size'])
 
-    # Update max_len based on actual data
-    target_len = dataset.train_dataloader.dataset[1][1].shape[0]    # assuming they are all the same len
-    input_len = dataset.train_dataloader.dataset[1][0].shape[0]
-    if config['model']['architecture'] == 'decoder_only':
-        # For decoder-only, we concatenate input + target, so need longer max_len
-        max_len = input_len + target_len
-    else:
-        # For other architectures, use target length or max of input/target
-        max_len = max(input_len, target_len)
+    # now create a torch dataset and dataloader
+    base = config['data'].get('base', 1000)
+    tokenizer = BaseTokenizer(base=base)
+    dataset = Dataset(data, tokenizer=tokenizer, base=base, batch_size=config['training']['batch_size'], eval_size=config['training']['eval_size'])
 
     # Initialize the model
     model = Transformer(
@@ -61,7 +55,7 @@ def main(config_path, resume_from=None):
         d_ff=config['model']['d_ff'],
         num_encoder_layers=config['model']['num_encoder_layers'],
         num_decoder_layers=config['model']['num_decoder_layers'],
-        max_len=max_len,  # Use actual data length
+        max_len=config['model']['max_len'],  # Use actual data length
         dropout=config['model']['dropout'],
         architecture=config['model']['architecture'],
         is_sinusoidal=config['model']['is_sinusoidal']
