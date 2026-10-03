@@ -1,0 +1,33 @@
+# Appendix B, second experiment:  ((a_p(E))_{p<100}, N)  ->  (w1, w2, w3)
+# Reported result (Table 11): w1 100%, w2 89.2%, w3 80.5%, joint 72.6%.
+model:
+  src_vocab_size: 37            # base (30) + 7 special/sign tokens
+  tgt_vocab_size: 37
+  d_model: 128
+  num_heads: 1
+  d_ff: 256
+  num_encoder_layers: 1
+  num_decoder_layers: 1
+  max_len: 57                   # longest tokenised sequence in this dataset
+  dropout: 0
+  architecture: 'encoder_decoder'
+  is_sinusoidal: false          # learnable positional embeddings
+
+training:
+  experiment_name: 'w1w2w3'
+  batch_size: 32
+  num_epochs: 150
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  cache_dir: 'cache'
+  seed: 42
+  eval_size: 10000              # generation is slow, so cap the validation set
+
+data:
+  base: 30                      # integers are written in base 30
+  eval_size: 10000
+  data_path: 'data/aps100_ainvs_full.parquet'
+  seed: 42
+
+device:
+  use_cuda: true

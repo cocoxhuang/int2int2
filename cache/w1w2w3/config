@@ -1,0 +1,28 @@
+data:
+  base: 30
+  data_path: data/aps100_ainvs_full.parquet
+  eval_size: 10000
+  seed: 42
+device:
+  use_cuda: true
+model:
+  architecture: encoder_decoder
+  d_ff: 256
+  d_model: 128
+  dropout: 0
+  is_sinusoidal: false
+  max_len: 57
+  num_decoder_layers: 1
+  num_encoder_layers: 1
+  num_heads: 1
+  src_vocab_size: 37
+  tgt_vocab_size: 37
+training:
+  batch_size: 32
+  cache_dir: cache
+  eval_size: 10000
+  experiment_name: APS100_AINVS
+  learning_rate: 0.0001
+  num_epochs: 150
+  seed: 42
+  weight_decay: 0.01

@@ -1,0 +1,18 @@
+2026-02-06 15:17:50,718 - Experiment - INFO - ==================================================
+2026-02-06 15:17:50,718 - Experiment - INFO - Logging initialized. Log file: cache/sesh_20260206_151750/training.log
+2026-02-06 15:17:50,718 - Experiment - INFO - Using data path from config: data/aps100_ainvs.parquet
+2026-02-06 15:19:01,974 - Experiment - INFO - Updating max_len from 30 to 52 based on dataset
+2026-02-06 15:19:03,516 - Experiment - INFO - Training using device: cuda
+2026-02-06 15:19:03,697 - Experiment - INFO - ============ Model Information ============
+2026-02-06 15:19:03,697 - Experiment - INFO - Model is encoder-decoder.
+2026-02-06 15:19:03,697 - Experiment - INFO - Training using device: cuda
+2026-02-06 15:19:03,698 - Experiment - INFO - Model has 1 encoder layers, 1 decoder layers, embedding dimension is 128.
+2026-02-06 15:19:03,698 - Experiment - INFO - Model has 1 attention heads.
+2026-02-06 15:19:03,698 - Experiment - INFO - Model parameters: 358,821
+2026-02-06 15:19:03,698 - Experiment - INFO - Model is using learnable positional encoding.
+2026-02-06 15:19:03,700 - Experiment - INFO - Configuration saved to cache/sesh_20260206_151750/config
+2026-02-06 15:19:03,700 - Experiment - INFO - ============ Start Training ============
+2026-02-06 15:26:47,623 - Experiment - INFO - Epoch 1/150, Training Loss: 0.0108, Time: 463.92s
+2026-02-06 15:26:52,752 - Experiment - INFO - For validation data: loss = 0.0000, accuracy = 1.00000000, Time: 5.13s
+2026-02-06 15:26:52,752 - Experiment - INFO - New best model found at epoch 1
+2026-02-06 15:26:52,793 - Experiment - INFO - Best model saved to cache/sesh_20260206_151750/best_model.pth

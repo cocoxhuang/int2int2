@@ -1,17 +1,13 @@
-from copy import deepcopy
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import os
 import time
 import numpy as np
 import random
+from tqdm import tqdm
 
 # Import configuration
-from ..utils.config import load_config, save_config
-from ..utils.logger import Logger
-from ..data.dataset import Dataset
-from ..model.transformer import Transformer
+from ..utils.config import save_config
 from .evaluator import Evaluator
 
 class Trainer:
@@ -54,12 +50,14 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss()
         
         # Set device
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        use_cuda = config.get('device', {}).get('use_cuda', True)
+        self.device = torch.device('cuda' if use_cuda and torch.cuda.is_available() else 'cpu')
         self.logger.info(f"Training using device: {self.device}")
         self.model.to(self.device)
         
         # Initialize evaluator
-        self.evaluator = Evaluator(model, dataset.eval_dataloader, self.criterion, self.device)
+        self.evaluator = Evaluator(model, dataset.eval_dataloader, self.criterion,
+                                   self.device, tokenizer=getattr(dataset, 'tokenizer', None))
         
         # Training tracking
         self.train_loss = []
@@ -69,7 +67,7 @@ class Trainer:
         self.best_loss = float('inf')
         
         # Calculate max_new_tokens from dataset
-        self.max_new_tokens = dataset.train_dataloader.dataset[1][1].shape[0] - 1  # Exclude BOS token
+        self.max_new_tokens = dataset.train_dataloader.dataset[0][1].shape[0] - 1  # Exclude BOS token
         
         # Handle training resumption
         if resume_from:
@@ -145,10 +143,7 @@ class Trainer:
             state_path = os.path.join(self.logger.cache_dir, "training_state.pth")
             torch.save(state, state_path)
             
-            # Save epoch-specific checkpoint if enabled
-            epoch_model_path = self.logger.get_model_path("model")
-            torch.save(self.model.state_dict(), epoch_model_path)
-            self.logger.debug(f"Epoch {epoch+1} model saved to {epoch_model_path}")
+            self.logger.debug(f"Epoch {epoch+1} model saved to {model_path}")
             
             # Save best model separately
             if is_best:
@@ -158,6 +153,22 @@ class Trainer:
                 
         except Exception as e:
             self.logger.error(f"Error saving checkpoint: {e}")
+
+    def _log_per_coefficient(self):
+        """Log per-coefficient accuracy and majority baselines (paper Table 11)."""
+        if self.evaluator.tokenizer is None:
+            return
+        try:
+            with torch.no_grad():
+                self.model.eval()
+                stats = self.evaluator.evaluate_per_coefficient(self.max_new_tokens)
+        except Exception as e:  # never let reporting break a finished run
+            self.logger.warning(f"Per-coefficient evaluation failed: {e}")
+            return
+        self.logger.info(f"Per-coefficient validation accuracy ({stats['n']} classes):")
+        for i, (acc, base) in enumerate(zip(stats['accuracy'], stats['baseline']), start=1):
+            self.logger.info(f"  w{i}: {acc:.4f}   (majority-class baseline {base:.4f})")
+        self.logger.info(f"  joint: {stats['joint']:.4f}")
 
     def train(self):        
         self.logger.info("============ Start Training ============")
@@ -170,7 +181,7 @@ class Trainer:
             self.model.train()
             total_loss = 0
             
-            for batch_idx, batch in enumerate(self.dataset.train_dataloader):
+            for batch_idx, batch in tqdm(enumerate(self.dataset.train_dataloader), total=len(self.dataset.train_dataloader)):
                 inputs, targets = batch
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 
@@ -249,6 +260,7 @@ class Trainer:
         self.logger.info(final_msg)
         self.logger.info(f"Best validation loss: {self.best_loss:.4f}")
         self.logger.info(f"Best validation accuracy: {max(self.eval_accuracy):.8f}")
+        self._log_per_coefficient()
         
         # Save final checkpoint
         self._save_checkpoint(self.num_epochs - 1, is_best=False)

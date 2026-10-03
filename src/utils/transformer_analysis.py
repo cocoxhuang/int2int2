@@ -55,7 +55,12 @@ def analyze_cross_attention(model, examples, start_idx=0, step=3, att_head=2, fi
         is_correct = (outputs["generated_tokens"][0, -max_new_tokens:] == targets[-max_new_tokens:]).all().item()
         
         # Extract cross-attention for visualization
-        crs_att = outputs['attention_history'][step]['decoder'][0]['cross_attention'][0, att_head, :, :].squeeze()
+        # Ensure step is within bounds
+        actual_step = min(step, len(outputs['attention_history']) - 1)
+        if actual_step != step and i == 0:  # Only print warning once
+            print(f"Warning: Requested step {step} is out of bounds. Using step {actual_step} instead (max: {len(outputs['attention_history']) - 1})")
+        
+        crs_att = outputs['attention_history'][actual_step]['decoder'][0]['cross_attention'][0, att_head, :, :]
         
         # Plot in subplot
         ax = axes[i]
@@ -148,7 +153,12 @@ def analyze_decoder_attention(model, examples, start_idx=0, step=10, att_head=0,
         is_correct = (outputs["generated_tokens"][0, -max_new_tokens:] == targets[-max_new_tokens:]).all().item()
         
         # Extract decoder self-attention for visualization
-        dec_self_att_raw = outputs['attention_history'][step]['decoder'][0]['self_attention']
+        # Ensure step is within bounds
+        actual_step = min(step, len(outputs['attention_history']) - 1)
+        if actual_step != step and i == 0:  # Only print warning once
+            print(f"Warning: Requested step {step} is out of bounds. Using step {actual_step} instead (max: {len(outputs['attention_history']) - 1})")
+        
+        dec_self_att_raw = outputs['attention_history'][actual_step]['decoder'][0]['self_attention']
         
         # Handle different possible tensor shapes
         if dec_self_att_raw.dim() == 4:
@@ -364,8 +374,8 @@ def analyze_encoder_attention(model, examples, start_idx=0, step=0, att_head=0, 
         is_correct = (outputs["generated_tokens"][0, -max_new_tokens:] == targets[-max_new_tokens:]).all().item()
         
         # Extract encoder self-attention for visualization
-        # Encoder attention is typically computed once at the beginning
-        enc_att_raw = outputs['attention_history'][step]['encoder'][0]['self_attention']
+        # Encoder attention is computed once at the beginning (step 0)
+        enc_att_raw = outputs['attention_history'][0]['encoder'][0]['self_attention']
         
         # Handle different possible tensor shapes
         if enc_att_raw.dim() == 4:
@@ -421,33 +431,13 @@ def analyze_encoder_attention(model, examples, start_idx=0, step=0, att_head=0, 
     
     return all_outputs
 
-# Convert tokens to Dyck path coordinates for visualization
-def tokens_to_path(tokens):
-    """Convert tokens to path coordinates for plotting. North step is represented by a 1 and an East step is represented by a 0."""
-    x_coords = [0]
-    y_coords = [0]
-
-    for i, token in enumerate(tokens):
-        if token == 2:  # 0 in Dyck path (right step)
-            y_coords.append(y_coords[-1])
-            x_coords.append(x_coords[-1] + 1)
-        elif token == 3:  # 1 in Dyck path (up step)
-            y_coords.append(y_coords[-1] + 1)
-            x_coords.append(x_coords[-1])
-        else:  # Other tokens (BOS, EOS, etc.)
-            # Skip these tokens entirely - don't add to path
-            continue
-
-    return x_coords, y_coords
-
 def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, encoder_att_head=0, decoder_att_head=0, figsize=(16, 12), cmap='Blues'):
     """
-    Comprehensive attention analysis showing 4 visualizations in a 2x2 grid:
-    1. Dyck paths (input, target, generated)
-    2. Cross-attention
-    3. Encoder self-attention  
-    4. Decoder self-attention
-    
+    Comprehensive attention analysis showing 3 visualizations in a 2x2 grid:
+    1. Cross-attention
+    2. Encoder self-attention
+    3. Decoder self-attention
+     
     Args:
         model: The transformer model
         examples: Dict with 'inputs' and 'targets'
@@ -485,32 +475,21 @@ def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, enco
 
     generated = outputs["generated_tokens"][0][-max_new_tokens:]
     
+    # Ensure step is within bounds
+    actual_step = min(step, len(outputs['attention_history']) - 1)
+    if actual_step != step:
+        print(f"Warning: Requested step {step} is out of bounds. Using step {actual_step} instead (max: {len(outputs['attention_history']) - 1})")
+     
     # Create 2x2 subplot
     fig, axes = plt.subplots(2, 2, figsize=figsize)
     
-    # 1. Dyck paths visualization (top-left)
-    ax1 = axes[0, 0]
-        
-    # Plot input, target, and generated paths
-    input_x, input_y = tokens_to_path(inputs.cpu().numpy())
-    target_x, target_y = tokens_to_path(targets.cpu().numpy())
-    gen_x, gen_y = tokens_to_path(generated.cpu().numpy())
+    # Hide bottom-right panel
+    axes[1, 1].set_visible(False)
     
-    ax1.plot(input_x, input_y, 'b-', label='Input', linewidth=2, alpha=0.7)
-    ax1.plot(target_x, target_y, 'g-', label='Target', linewidth=2, alpha=0.7)
-    ax1.plot(gen_x, gen_y, 'r--', label='Generated', linewidth=2, alpha=0.7)
-    # draw y = x line
-    ax1.plot([0, max(gen_x)], [0, max(gen_y)], 'k--', linewidth=0.5, alpha=0.5)
-    ax1.set_title(f'Dyck Paths (Example {ex_idx})', fontsize=12)
-    ax1.set_xlabel('Position')
-    ax1.set_ylabel('Height')
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-    
-    # 2. Cross-attention (top-right)
-    ax2 = axes[0, 1]
+    # 1. Cross-attention (bottom-left)
+    ax1 = axes[1, 0]
     try:
-        crs_att_raw = outputs['attention_history'][step]['decoder'][0]['cross_attention']
+        crs_att_raw = outputs['attention_history'][actual_step]['decoder'][0]['cross_attention']
         if crs_att_raw.dim() == 4:
             crs_att = crs_att_raw[0, cross_att_head, :, :]
         elif crs_att_raw.dim() == 3:
@@ -527,13 +506,13 @@ def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, enco
         print("Warning: Cross-attention data not found. Using default empty matrix.")
         crs_att = torch.zeros((1, 1))  # Default empty attention matrix
 
-    im2 = ax2.imshow(crs_att.cpu().numpy(), cmap=cmap, aspect='auto')
-    ax2.set_title(f'Cross-Attention (Step {step}, Head {cross_att_head})', fontsize=12)
-    ax2.set_xlabel('Input Position')
-    ax2.set_ylabel('Generated Position')
-    
-    # 3. Encoder self-attention (bottom-left)
-    ax3 = axes[1, 0]
+    im1 = ax1.imshow(crs_att.cpu().numpy(), cmap=cmap, aspect='auto')
+    ax1.set_title(f'Cross-Attention (Step {actual_step}, Head {cross_att_head})', fontsize=12)
+    ax1.set_xlabel('Input Position')
+    ax1.set_ylabel('Generated Position')
+     
+    # 2. Encoder self-attention (top-left)
+    ax2 = axes[0, 0]
     try:
         enc_att_raw = outputs['attention_history'][0]['encoder'][0]['self_attention']  # Encoder computed at step 0
         if enc_att_raw.dim() == 4:
@@ -552,15 +531,15 @@ def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, enco
         print("Warning: Encoder self-attention data not found. Using default empty matrix.")
         enc_att = torch.zeros((1, 1))  # Default empty attention matrix  
 
-    im3 = ax3.imshow(enc_att.cpu().numpy(), cmap=cmap, aspect='auto')
-    ax3.set_title(f'Encoder Self-Attention (Head {encoder_att_head})', fontsize=12)
-    ax3.set_xlabel('Key Position')
-    ax3.set_ylabel('Query Position')
-    
-    # 4. Decoder self-attention (bottom-right)
-    ax4 = axes[1, 1]
+    im2 = ax2.imshow(enc_att.cpu().numpy(), cmap=cmap, aspect='auto')
+    ax2.set_title(f'Encoder Self-Attention (Head {encoder_att_head})', fontsize=12)
+    ax2.set_xlabel('Key Position')
+    ax2.set_ylabel('Query Position')
+     
+    # 3. Decoder self-attention (top-right)
+    ax3 = axes[0, 1]
     try:
-        dec_self_att_raw = outputs['attention_history'][step]['decoder'][0]['self_attention']
+        dec_self_att_raw = outputs['attention_history'][actual_step]['decoder'][0]['self_attention']
         if dec_self_att_raw.dim() == 4:
             dec_self_att = dec_self_att_raw[0, decoder_att_head, :, :]
         elif dec_self_att_raw.dim() == 3:
@@ -577,15 +556,15 @@ def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, enco
         print("Warning: Decoder self-attention data not found. Using default empty matrix.")
         dec_self_att = torch.zeros((1, 1))  # Default empty attention matrix
 
-    im4 = ax4.imshow(dec_self_att.cpu().numpy(), cmap=cmap, aspect='auto')
-    ax4.set_title(f'Decoder Self-Attention (Step {step}, Head {decoder_att_head})', fontsize=12)
-    ax4.set_xlabel('Key Position')
-    ax4.set_ylabel('Query Position')
+    im3 = ax3.imshow(dec_self_att.cpu().numpy(), cmap=cmap, aspect='auto')
+    ax3.set_title(f'Decoder Self-Attention (Step {actual_step}, Head {decoder_att_head})', fontsize=12)
+    ax3.set_xlabel('Key Position')
+    ax3.set_ylabel('Query Position')
     
     # Add colorbars for attention plots
+    plt.colorbar(im1, ax=ax1, shrink=0.8, aspect=20)
     plt.colorbar(im2, ax=ax2, shrink=0.8, aspect=20)
     plt.colorbar(im3, ax=ax3, shrink=0.8, aspect=20)
-    plt.colorbar(im4, ax=ax4, shrink=0.8, aspect=20)
     
     # Adjust layout
     plt.tight_layout()
@@ -609,13 +588,13 @@ def attention_example(model, examples, ex_idx=0, step=10, cross_att_head=0, enco
         'target_tokens': targets
     }
 
-def analyze_embeddings_pca(model, dataset, figsize=(10, 8), alpha=0.5, fontsize=10):
+def analyze_embeddings_pca(model, tokenizer, figsize=(10, 8), alpha=0.5, fontsize=10):
     """
     Analyze and visualize model embeddings using PCA.
     
     Args:
         model: The transformer model
-        dataset: Dataset object containing the dictionary
+        tokenizer: Tokenizer object with id_to_token mapping (optional, if None, no labels are shown)
         figsize: Figure size for the plot
         alpha: Transparency for scatter points
         fontsize: Font size for annotations
@@ -647,18 +626,19 @@ def analyze_embeddings_pca(model, dataset, figsize=(10, 8), alpha=0.5, fontsize=
     ax.legend()
     ax.grid(True, alpha=0.3)
     
-    # Add token labels
-    dictionary = dataset.dictionary
-    
-    # Label target embeddings
-    for i, (x, y) in enumerate(tgt_emb):
-        ax.annotate(f'{dictionary[i]}', (x, y), xytext=(5, 5), textcoords='offset points', 
-                   fontsize=fontsize, ha='left', va='bottom', color='orange')
-    
-    # Label source embeddings
-    for i, (x, y) in enumerate(src_emb):
-        ax.annotate(f'{dictionary[i]}', (x, y), xytext=(5, 5), textcoords='offset points', 
-                   fontsize=fontsize, ha='left', va='bottom', color='blue')
+    # Add token labels if tokenizer is provided
+    if tokenizer is not None:
+        # Label target embeddings
+        for i, (x, y) in enumerate(tgt_emb):
+            label = tokenizer.id_to_token.get(i, f'id{i}')
+            ax.annotate(f'{label}', (x, y), xytext=(5, 5), textcoords='offset points', 
+                       fontsize=fontsize, ha='left', va='bottom', color='orange')
+        
+        # Label source embeddings
+        for i, (x, y) in enumerate(src_emb):
+            label = tokenizer.id_to_token.get(i, f'id{i}')
+            ax.annotate(f'{label}', (x, y), xytext=(5, 5), textcoords='offset points', 
+                       fontsize=fontsize, ha='left', va='bottom', color='blue')
     
     plt.tight_layout()
     plt.show()

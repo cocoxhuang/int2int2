@@ -56,7 +56,7 @@ class BaseTokenizer:
             
         return vocab
     
-    def encode_integer(self, value: int):
+    def encode_integer(self, value: int) -> List[str]:
         """
         Convert a single integer to sign and base representation.
         Example:
@@ -76,7 +76,7 @@ class BaseTokenizer:
         digits.reverse()
         return [sign] + digits
     
-    def encode_sequence(self, integers, add_special_tokens = True):
+    def encode_sequence(self, integers: list[int], add_special_tokens = True):
         """Convert a sequence of integers to token representation."""
         tokens = []
         if add_special_tokens:  # first add bos
@@ -100,23 +100,49 @@ class BaseTokenizer:
         return -value if sign == '-' else value
     
     def decode_sequence(self, tokens):
-        """Convert tokens back to sequence of integers."""
-        # Remove special tokens
-        filtered_tokens = [t for t in tokens if t not in [self.bos_token, self.eos_token, self.pad_token, self.sep_token, self.unk_token]]
-        # decode
-        integers = []
-        current_tokens = []
-        for token in filtered_tokens:
-            integers.append(token)
+        """Convert tokens back to a sequence of integers.
+
+        Decoding stops at the first <EOS> or <PAD>: a freely generated
+        sequence may carry arbitrary tokens past the end of the answer.
+        A trailing sign with no digits is dropped rather than read as 0.
+        """
+        integers, sign, digits = [], None, []
+
+        def flush():
+            if sign is None or not digits:
+                return
+            value = 0
+            for d in digits:
+                value = value * self.base + d
+            integers.append(-value if sign == '-' else value)
+
+        for token in tokens:
+            if token in (self.eos_token, self.pad_token):
+                break
+            if token in (self.bos_token, self.sep_token, self.unk_token):
+                continue
+            if token in ('+', '-'):
+                flush()
+                sign, digits = token, []
+            elif token.isdigit():
+                digits.append(int(token))
+        flush()
         return integers
     
-    def tokenize(self, integers, add_special_tokens = True):
+    def tokenize(self, integers : str, add_special_tokens = True):
         """Convert sequence of integers to token IDs."""
+        if isinstance(integers, str):  # then it's a string of integers
+            if "," in integers:  # comma-separated, with or without spaces
+                integers = [int(i) for i in integers.split(",")]
+            else:   # then it's a single integer
+                integers = [int(integers)]
+        elif isinstance(integers, int):
+            integers = [integers]
         string_tokens = self.encode_sequence(integers, add_special_tokens)
         return [self.vocab.get(token, self.vocab[self.unk_token]) for token in string_tokens]
     
     def detokenize(self, token_ids):
-        """ Convert token IDs back to sequence of integers."""
+        """Convert token IDs back to a sequence of integers."""
         string_tokens = [self.id_to_token.get(token_id, self.unk_token) for token_id in token_ids]
         return self.decode_sequence(string_tokens)
     

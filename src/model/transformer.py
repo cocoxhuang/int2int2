@@ -19,10 +19,12 @@ class PositionalEncoding(nn.Module):
             self.register_buffer('position_ids', torch.arange(max_len))
 
     def forward(self, x):
+        # x has shape [batch_size, seq_len, d_model]
         if self.is_sinusoidal:
-            return x + self.pe[:x.size(1)]
+            return x + self.pe[:x.size(1)].unsqueeze(0)
         else:
             position_ids = self.position_ids[:x.size(1)]
+            # pe(position_ids) has shape [seq_len, d_model], add batch dimension
             return x + self.pe(position_ids).unsqueeze(0)
 
 class MultiHeadAttention(nn.Module):
@@ -215,7 +217,15 @@ class Transformer(nn.Module):
         
         return self.fc_out(tgt_emb)
 
-    def generate(self, src, tgt, max_new_tokens, temperature=1.0, top_k=None):
+    def generate(self, src, tgt, max_new_tokens, temperature=1.0, top_k=None,
+                 do_sample=False):
+        """Autoregressively extend `tgt` by `max_new_tokens` tokens.
+
+        Decoding is greedy (argmax) by default. The accuracies reported in
+        Appendix B are greedy-decode accuracies; sampling from the softmax
+        instead measures a random draw from the model and scores several
+        points lower, so `do_sample=True` is only for qualitative inspection.
+        """
         if self.architecture == 'encoder_only':
             raise ValueError("Generation is not supported for encoder-only models")
         assert tgt is not None, "Target sequence must be provided for generation"
@@ -228,23 +238,25 @@ class Transformer(nn.Module):
                 logits = self(src=src, tgt=tgt)
             
             # Focus on last time step
-            logits = logits[:, -1, :] / temperature
-            
-            # Optionally crop to top-k
-            if top_k is not None:
-                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-                logits[logits < v[:, [-1]]] = -float('Inf')
-            
-            # Apply softmax for probabilities
-            probs = F.softmax(logits, dim=-1)
-            
-            # Sample from distribution
-            next_token = torch.multinomial(probs, num_samples=1)
-            
+            logits = logits[:, -1, :]
+
+            next_token = self._next_token(logits, temperature, top_k, do_sample)
+
             # Append to sequence
             tgt = torch.cat((tgt, next_token), dim=1)
         
         return tgt
+
+    @staticmethod
+    def _next_token(logits, temperature, top_k, do_sample):
+        """Pick the next token from the final-position logits."""
+        if not do_sample:
+            return logits.argmax(dim=-1, keepdim=True)
+        logits = logits / temperature
+        if top_k is not None:
+            v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+            logits = logits.masked_fill(logits < v[:, [-1]], -float('Inf'))
+        return torch.multinomial(F.softmax(logits, dim=-1), num_samples=1)
     
     def _embedding_weights(self):
         # returns embedding weights for visualization or analysis
@@ -288,7 +300,8 @@ class Transformer(nn.Module):
         
         return attention_scores
 
-    def generate_with_attention_tracking(self, src=None, tgt=None, max_new_tokens=10, temperature=1.0, top_k=None):
+    def generate_with_attention_tracking(self, src=None, tgt=None, max_new_tokens=10,
+                                         temperature=1.0, top_k=None, do_sample=False):
         """
         Generate tokens while tracking attention scores at each step.
         
@@ -340,19 +353,8 @@ class Transformer(nn.Module):
             attention_history.append(step_attention)
             
             # Focus on last time step for next token prediction
-            logits = logits[:, -1, :] / temperature
-            
-            # Optionally crop to top-k
-            if top_k is not None:
-                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-                logits[logits < v[:, [-1]]] = -float('Inf')
-            
-            # Apply softmax for probabilities
-            probs = F.softmax(logits, dim=-1)
-            
-            # Sample from distribution
-            next_token = torch.multinomial(probs, num_samples=1)
-            
+            next_token = self._next_token(logits[:, -1, :], temperature, top_k, do_sample)
+
             # Append to sequence
             generated_tokens = torch.cat((generated_tokens, next_token), dim=1)
         

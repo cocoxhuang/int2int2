@@ -44,7 +44,15 @@ def main(config_path, resume_from=None):
     # now create a torch dataset and dataloader
     base = config['data'].get('base', 1000)
     tokenizer = BaseTokenizer(base=base)
-    dataset = Dataset(data, tokenizer=tokenizer, base=base, batch_size=config['training']['batch_size'], eval_size=config['training']['eval_size'])
+    dataset = Dataset(data, tokenizer=tokenizer, base=base, seed=config['data']['seed'],
+                      batch_size=config['training']['batch_size'],
+                      eval_size=config['training']['eval_size'])
+
+    # Update max_len based on actual dataset sequence length
+    actual_max_len = max(dataset.data['inputs'].size(1), dataset.data['targets'].size(1))
+    if actual_max_len > config['model']['max_len']:
+        logger.info(f"Updating max_len from {config['model']['max_len']} to {actual_max_len} based on dataset")
+        config['model']['max_len'] = actual_max_len
 
     # Initialize the model
     model = Transformer(
@@ -71,7 +79,7 @@ def main(config_path, resume_from=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train the Transformer model.")
-    parser.add_argument('--config', type=str, default='configs/default_config.yaml', help='Path to the configuration file.')
+    parser.add_argument('--config', type=str, default='configs/w1w2w3.yaml', help='Path to the configuration file.')
     parser.add_argument('--resume', type=str, default=None, help='Path to training session to resume from (e.g., cache/sesh_20250804_052923)')
     # parser.add_argument('--list-sessions', action='store_true', help='List all available training sessions')
     args = parser.parse_args()

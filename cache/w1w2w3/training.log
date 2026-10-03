@@ -1,0 +1,76 @@
+2026-06-23 00:08:21,071 - Experiment - INFO - ==================================================
+2026-06-23 00:08:21,071 - Experiment - INFO - Logging initialized. Log file: cache/sesh_20260623_000821/training.log
+2026-06-23 00:08:21,071 - Experiment - INFO - Using data path from config: data/aps100_ainvs_full.parquet
+2026-06-23 00:09:38,883 - Experiment - INFO - Updating max_len from 30 to 57 based on dataset
+2026-06-23 00:09:39,849 - Experiment - INFO - Training using device: cuda
+2026-06-23 00:09:40,003 - Experiment - INFO - ============ Model Information ============
+2026-06-23 00:09:40,003 - Experiment - INFO - Model is encoder-decoder.
+2026-06-23 00:09:40,003 - Experiment - INFO - Training using device: cuda
+2026-06-23 00:09:40,003 - Experiment - INFO - Model has 1 encoder layers, 1 decoder layers, embedding dimension is 128.
+2026-06-23 00:09:40,003 - Experiment - INFO - Model has 1 attention heads.
+2026-06-23 00:09:40,003 - Experiment - INFO - Model parameters: 360,101
+2026-06-23 00:09:40,004 - Experiment - INFO - Model is using learnable positional encoding.
+2026-06-23 00:09:40,005 - Experiment - INFO - Configuration saved to cache/sesh_20260623_000821/config
+2026-06-23 00:09:40,005 - Experiment - INFO - ============ Start Training ============
+2026-06-23 00:15:58,920 - Experiment - INFO - Epoch 1/150, Training Loss: 0.1165, Time: 378.91s
+2026-06-23 00:16:04,323 - Experiment - INFO - For validation data: loss = 0.0867, accuracy = 0.61940000, Time: 5.40s
+2026-06-23 00:16:04,323 - Experiment - INFO - New best model found at epoch 1
+2026-06-23 00:16:04,355 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 00:22:34,655 - Experiment - INFO - Epoch 2/150, Training Loss: 0.0853, Time: 390.30s
+2026-06-23 00:22:39,973 - Experiment - INFO - For validation data: loss = 0.0834, accuracy = 0.63080000, Time: 5.32s
+2026-06-23 00:22:39,973 - Experiment - INFO - New best model found at epoch 2
+2026-06-23 00:22:40,009 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 00:29:08,354 - Experiment - INFO - Epoch 3/150, Training Loss: 0.0817, Time: 388.35s
+2026-06-23 00:29:13,593 - Experiment - INFO - For validation data: loss = 0.0782, accuracy = 0.65130000, Time: 5.24s
+2026-06-23 00:29:13,593 - Experiment - INFO - New best model found at epoch 3
+2026-06-23 00:29:13,629 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 00:35:53,082 - Experiment - INFO - Epoch 4/150, Training Loss: 0.0797, Time: 399.45s
+2026-06-23 00:35:58,316 - Experiment - INFO - For validation data: loss = 0.0810, accuracy = 0.65640000, Time: 5.23s
+2026-06-23 00:42:15,912 - Experiment - INFO - Epoch 5/150, Training Loss: 0.0780, Time: 377.57s
+2026-06-23 00:42:21,043 - Experiment - INFO - For validation data: loss = 0.0772, accuracy = 0.66010000, Time: 5.13s
+2026-06-23 00:42:21,043 - Experiment - INFO - New best model found at epoch 5
+2026-06-23 00:42:21,078 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 00:48:37,856 - Experiment - INFO - Epoch 6/150, Training Loss: 0.0771, Time: 376.78s
+2026-06-23 00:48:42,960 - Experiment - INFO - For validation data: loss = 0.0757, accuracy = 0.65330000, Time: 5.10s
+2026-06-23 00:48:42,960 - Experiment - INFO - New best model found at epoch 6
+2026-06-23 00:48:42,995 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 00:54:59,337 - Experiment - INFO - Epoch 7/150, Training Loss: 0.0770, Time: 376.34s
+2026-06-23 00:55:04,436 - Experiment - INFO - For validation data: loss = 0.0767, accuracy = 0.65620000, Time: 5.10s
+2026-06-23 01:01:20,938 - Experiment - INFO - Epoch 8/150, Training Loss: 0.0769, Time: 376.47s
+2026-06-23 01:01:26,071 - Experiment - INFO - For validation data: loss = 0.0782, accuracy = 0.65340000, Time: 5.13s
+2026-06-23 01:07:42,829 - Experiment - INFO - Epoch 9/150, Training Loss: 0.0769, Time: 376.73s
+2026-06-23 01:07:47,916 - Experiment - INFO - For validation data: loss = 0.0798, accuracy = 0.65620000, Time: 5.09s
+2026-06-23 01:14:04,495 - Experiment - INFO - Epoch 10/150, Training Loss: 0.0768, Time: 376.55s
+2026-06-23 01:14:09,556 - Experiment - INFO - For validation data: loss = 0.0780, accuracy = 0.65410000, Time: 5.06s
+2026-06-23 01:20:30,560 - Experiment - INFO - Epoch 11/150, Training Loss: 0.0768, Time: 380.98s
+2026-06-23 01:20:35,628 - Experiment - INFO - For validation data: loss = 0.0758, accuracy = 0.66170000, Time: 5.07s
+2026-06-23 01:26:55,980 - Experiment - INFO - Epoch 12/150, Training Loss: 0.0768, Time: 380.32s
+2026-06-23 01:27:01,060 - Experiment - INFO - For validation data: loss = 0.0758, accuracy = 0.65730000, Time: 5.08s
+2026-06-23 01:41:26,326 - Experiment - INFO - ==================================================
+2026-06-23 01:41:26,326 - Experiment - INFO - Logging initialized. Log file: cache/sesh_20260623_000821/training.log
+2026-06-23 01:41:26,326 - Experiment - INFO - Resuming training from session: cache/sesh_20260623_000821
+2026-06-23 01:41:26,326 - Experiment - INFO - Using data path from config: data/aps100_ainvs_full.parquet
+2026-06-23 01:42:47,475 - Experiment - INFO - Training using device: cuda
+2026-06-23 01:42:47,646 - Experiment - INFO - Model loaded from cache/sesh_20260623_000821/model.pth
+2026-06-23 01:42:47,674 - Experiment - INFO - Training state loaded from cache/sesh_20260623_000821/training_state.pth
+2026-06-23 01:42:47,674 - Experiment - INFO - Resuming from epoch 12
+2026-06-23 01:42:47,674 - Experiment - INFO - ============ Model Information ============
+2026-06-23 01:42:47,675 - Experiment - INFO - Model is encoder-decoder.
+2026-06-23 01:42:47,675 - Experiment - INFO - Training using device: cuda
+2026-06-23 01:42:47,675 - Experiment - INFO - Model has 1 encoder layers, 1 decoder layers, embedding dimension is 128.
+2026-06-23 01:42:47,675 - Experiment - INFO - Model has 1 attention heads.
+2026-06-23 01:42:47,675 - Experiment - INFO - Model parameters: 360,101
+2026-06-23 01:42:47,675 - Experiment - INFO - Model is using learnable positional encoding.
+2026-06-23 01:42:47,676 - Experiment - INFO - Configuration saved to cache/sesh_20260623_000821/config
+2026-06-23 01:42:47,676 - Experiment - INFO - ============ Start Training ============
+2026-06-23 01:42:47,676 - Experiment - INFO - Resuming training from epoch 12
+2026-06-23 01:49:32,018 - Experiment - INFO - Epoch 13/150, Training Loss: 0.0767, Time: 404.34s
+2026-06-23 01:49:37,133 - Experiment - INFO - For validation data: loss = 0.0758, accuracy = 0.65630000, Time: 5.11s
+2026-06-23 01:56:31,560 - Experiment - INFO - Epoch 14/150, Training Loss: 0.0767, Time: 414.40s
+2026-06-23 01:56:36,749 - Experiment - INFO - For validation data: loss = 0.0757, accuracy = 0.65550000, Time: 5.19s
+2026-06-23 02:03:31,553 - Experiment - INFO - Epoch 15/150, Training Loss: 0.0766, Time: 414.77s
+2026-06-23 02:03:36,704 - Experiment - INFO - For validation data: loss = 0.0754, accuracy = 0.66240000, Time: 5.15s
+2026-06-23 02:03:36,704 - Experiment - INFO - New best model found at epoch 15
+2026-06-23 02:03:36,740 - Experiment - INFO - Best model saved to cache/sesh_20260623_000821/best_model.pth
+2026-06-23 02:10:33,816 - Experiment - INFO - Epoch 16/150, Training Loss: 0.0767, Time: 417.08s
+2026-06-23 02:10:38,994 - Experiment - INFO - For validation data: loss = 0.0796, accuracy = 0.66300000, Time: 5.18s

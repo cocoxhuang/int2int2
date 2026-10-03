@@ -1,10 +1,10 @@
-# data/data_encoded.csv
-# data/data_test.txt
-# data/data_train.txt
-# data/data_val.txt
-# data/data.csv
-# data/raw_data.parquet
-/data
+# Datasets: rebuild them with `python data/build_dataset.py`
+/data/*.parquet
+/data/ecdata/
+
+# Training sessions. The two checkpoints behind the paper are tracked by name
+# (cache/w1w2, cache/w1w2w3); everything train.py creates is not.
+/cache/sesh_*
 
 # Python bytecode
 __pycache__/
