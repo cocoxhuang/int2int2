@@ -60,8 +60,7 @@ python evaluate.py --session cache/<your session>
 ```
 
 `train.py` writes each run to `cache/sesh_<timestamp>/` (model, optimiser
-state, the exact config used, and `training.log`). Pass `--resume
-cache/sesh_<timestamp>` to continue one.
+state, the exact config used, and `training.log`). Pass `--resume cache/sesh_<timestamp>` to continue one.
 
 ## The data
 
@@ -69,29 +68,14 @@ cache/sesh_<timestamp>` to continue one.
 [ecdata](https://github.com/JohnCremona/ecdata), Cremona's database of all
 elliptic curves over **Q** of conductor below 500000, which is the source
 LMFDB itself is built from. It downloads only the two directories it needs
-(`allcurves`, `alllabels`, ~190 MB together), not the full 1.8 GB of
-`curvedata`.
+(`allcurves`, `alllabels`, ~190 MB together).
 
-| file | input | target |
-|---|---|---|
-| `aps100_ainvs.parquet` | `a_2, a_3, ..., a_97` (25 traces) | `w1, w2` |
-| `aps100_ainvs_full.parquet` | `a_2, ..., a_97, N` | `w1, w2, w3` |
 
-One row per isogeny class. The representative is curve number **1 in the LMFDB
-numbering**, which differs from Cremona's (Cremona `100a3` is LMFDB `100.a1`) —
-hence the `alllabels` join. `(w1, w2, w3)` are the first three a-invariants of
-that curve's global minimal model.
+| file                        | input                             | target       |
+| --------------------------- | --------------------------------- | ------------ |
+| `aps100_ainvs.parquet`      | `a_2, a_3, ..., a_97` (25 traces) | `w1, w2`     |
+| `aps100_ainvs_full.parquet` | `a_2, ..., a_97, N`               | `w1, w2, w3` |
 
-LMFDB does not store `a_p`, so `src/data/frobenius.py` recomputes it by point
-counting:
-
-> `a_p = p - A`, where `A` is the number of affine points of the reduced
-> minimal model over `F_p`.
-
-One formula covers both cases — for good `p`, `#E(F_p) = A + 1`; for bad `p`,
-the singular point drops out and infinity comes in, so `#E_ns(F_p) = A` —
-and it yields `a_p = 0, +1, -1` for additive, split and non-split reduction
-respectively.
 
 ## Model and tokenisation
 
@@ -125,46 +109,3 @@ Analysis.ipynb                worked examples of the above
 cache/w1w2, cache/w1w2w3      the two checkpoints behind the results
 ```
 
-## Notes
-
-- **Decoding is greedy.** `Transformer.generate` takes the argmax by default.
-  Sampling from the softmax instead (`do_sample=True`) measures a random draw
-  from the model and scores several points below the reported numbers — on
-  `cache/w1w2w3` it gives a joint accuracy of 0.66 rather than 0.726.
-- **Padding is not masked.** Attention sees `<PAD>` positions and the
-  cross-entropy is taken over them too. This is how the reported models were
-  trained; adding a mask changes the numbers and invalidates the checkpoints.
-- **The two experiments used different weight decay.** Appendix B.1 states
-  `1e-2`, which is what `configs/w1w2w3.yaml` uses and what reproduces
-  Table 11. The 100% result on `(w1, w2)`, however, came from a run with
-  weight decay `0`, and `configs/w1w2.yaml` is set accordingly. At `1e-2` that
-  model converges by epoch 2 to a training loss of ~0.053 and then oscillates
-  between 88% and 91% for at least 29 epochs; at `0` it reaches a training
-  loss of 0.011 and exactly 100% validation accuracy within a single epoch.
-  Weight decay appears to stop this model from representing the exact rule
-  `(w1, w2) = f(a_2, a_3)`.
-- **Table 11 is measured on a 10,000-class subsample of the validation set.**
-  Appendix B.1 describes an 80/20 split and reports accuracy over the
-  validation classes; both configs additionally set `eval_size: 10000`,
-  because autoregressive decoding over all 420,003 is slow. The cap is a
-  random subsample, so the estimates are unbiased, but at n=10,000 one
-  standard error is ~0.4 points: on the full split `w3` is 81.6% rather than
-  80.5% (~2.8 sigma) and the joint figure is 73.3% rather than 72.6%. Every
-  qualitative claim in B.2 survives — `w1` exact, `w2` high but imperfect,
-  `w3` the bottleneck, and `w3` still above the 76.68% decision-tree result.
-- `num_epochs` is 150 in both configs, but neither run needed it: `w1w2`
-  saturates at 100% in one epoch, and `w1w2w3` was stopped after 16 epochs.
-  `evaluate.py` reads `best_model.pth`, the lowest-validation-loss epoch.
-- `encoder_only` and `decoder_only` exist in `Transformer` but are not used by
-  either experiment and are not covered by the results above.
-
-## Citation
-
-```bibtex
-@misc{int2int2,
-  author = {Huang, Xiaoyu},
-  title  = {Int2int2},
-  year   = {2026},
-  howpublished = {\url{https://github.com/cocoxhuang/int2int2}}
-}
-```
